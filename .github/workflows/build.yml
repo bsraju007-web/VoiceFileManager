@@ -23,6 +23,7 @@ jobs:
         run: |
           mkdir -p app/src/main/java/com/example/voicefile
           mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/res/xml
 
           cat << 'EOF' > settings.gradle
           rootProject.name = "VoiceFileManager"
@@ -58,8 +59,8 @@ jobs:
                   applicationId "com.example.voicefile"
                   minSdk 26
                   targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
+                  versionCode 4
+                  versionName "2.0"
               }
 
               compileOptions {
@@ -67,6 +68,17 @@ jobs:
                   targetCompatibility JavaVersion.VERSION_1_8
               }
           }
+
+          dependencies {
+              implementation 'androidx.core:core:1.12.0'
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/res/xml/provider_paths.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths xmlns:android="http://schemas.android.com/apk/res/android">
+              <external-path name="external_files" path="." />
+          </paths>
           EOF
 
           cat << 'EOF' > app/src/main/AndroidManifest.xml
@@ -89,38 +101,137 @@ jobs:
                           <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
                   </activity>
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="com.example.voicefile.provider"
+                      android:exported="false"
+                      android:grantUriPermissions="true">
+                      <meta-data
+                          android:name="android.support.FILE_PROVIDER_PATHS"
+                          android:resource="@xml/provider_paths" />
+                  </provider>
               </application>
           </manifest>
           EOF
 
           cat << 'EOF' > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:gravity="center"
-              android:layout_height="match_parent"
+          <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
-              android:orientation="vertical"
-              android:padding="24dp">
-              <TextView
-                  android:id="@+id/tvStatus"
+              android:layout_height="match_parent"
+              android:fillViewport="true">
+
+              <LinearLayout
+                  android:gravity="center_horizontal"
                   android:layout_height="wrap_content"
-                  android:layout_marginBottom="32dp"
-                  android:layout_width="wrap_content"
-                  android:text="Voice File Manager"
-                  android:textSize="20sp"
-                  android:textStyle="bold"/>
-              <Button
-                  android:id="@+id/btnRenameLatest"
-                  android:layout_height="60dp"
-                  android:layout_marginBottom="16dp"
                   android:layout_width="match_parent"
-                  android:text="🎙️ Rename Latest File"/>
-              <Button
-                  android:id="@+id/btnVoiceSearch"
-                  android:layout_height="60dp"
-                  android:layout_width="match_parent"
-                  android:text="🔍 Search File by Voice"/>
-          </LinearLayout>
+                  android:orientation="vertical"
+                  android:padding="20dp">
+
+                  <TextView
+                      android:id="@+id/tvAlertBadge"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:background="#FFEBEE"
+                      android:textColor="#C62828"
+                      android:padding="12dp"
+                      android:gravity="center"
+                      android:textStyle="bold"
+                      android:textSize="15sp"
+                      android:visibility="gone"
+                      android:layout_marginBottom="16dp" />
+
+                  <TextView
+                      android:id="@+id/tvTitle"
+                      android:layout_height="wrap_content"
+                      android:layout_width="wrap_content"
+                      android:text="Daily File Review &amp; Cleaner"
+                      android:textSize="20sp"
+                      android:textStyle="bold"
+                      android:layout_marginBottom="12dp"/>
+
+                  <ImageView
+                      android:id="@+id/ivPreview"
+                      android:layout_width="match_parent"
+                      android:layout_height="250dp"
+                      android:scaleType="fitCenter"
+                      android:background="#E0E0E0"
+                      android:visibility="gone"
+                      android:layout_marginBottom="12dp"/>
+
+                  <TextView
+                      android:id="@+id/tvCurrentFileName"
+                      android:layout_height="wrap_content"
+                      android:layout_width="wrap_content"
+                      android:textSize="15sp"
+                      android:textStyle="italic"
+                      android:layout_marginBottom="16dp"
+                      android:gravity="center"/>
+
+                  <TextView
+                      android:id="@+id/tvStatus"
+                      android:layout_height="wrap_content"
+                      android:layout_marginBottom="20dp"
+                      android:layout_width="wrap_content"
+                      android:text="Tap Review to start"
+                      android:textColor="#1976D2"
+                      android:textSize="16sp"
+                      android:textStyle="bold"/>
+
+                  <LinearLayout
+                      android:id="@+id/reviewControls"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:orientation="vertical"
+                      android:visibility="gone"
+                      android:layout_marginBottom="16dp">
+
+                      <Button
+                          android:id="@+id/btnVoiceRenameCurrent"
+                          android:layout_height="55dp"
+                          android:layout_width="match_parent"
+                          android:text="🎙️ Voice Rename"
+                          android:layout_marginBottom="8dp"/>
+
+                      <LinearLayout
+                          android:layout_width="match_parent"
+                          android:layout_height="wrap_content"
+                          android:orientation="horizontal">
+
+                          <Button
+                              android:id="@+id/btnDeleteCurrent"
+                              android:layout_height="50dp"
+                              android:layout_width="0dp"
+                              android:layout_weight="1"
+                              android:text="🗑️ Delete"
+                              android:textColor="#D32F2F"
+                              android:layout_marginEnd="6dp"/>
+
+                          <Button
+                              android:id="@+id/btnSkipCurrent"
+                              android:layout_height="50dp"
+                              android:layout_width="0dp"
+                              android:layout_weight="1"
+                              android:text="⏭️ Keep / Skip"
+                              android:layout_marginStart="6dp"/>
+                      </LinearLayout>
+                  </LinearLayout>
+
+                  <Button
+                      android:id="@+id/btnStartReview"
+                      android:layout_height="60dp"
+                      android:layout_width="match_parent"
+                      android:text="📋 Start Daily Review"
+                      android:layout_marginBottom="12dp"/>
+
+                  <Button
+                      android:id="@+id/btnVoiceSearch"
+                      android:layout_height="55dp"
+                      android:layout_width="match_parent"
+                      android:text="🔍 Search File by Voice"/>
+
+              </LinearLayout>
+          </ScrollView>
           EOF
 
           cat << 'EOF' > app/src/main/java/com/example/voicefile/MainActivity.java
@@ -128,50 +239,250 @@ jobs:
 
           import android.Manifest;
           import android.app.Activity;
+          import android.content.ContentResolver;
+          import android.content.Context;
           import android.content.Intent;
+          import android.content.SharedPreferences;
           import android.content.pm.PackageManager;
+          import android.database.Cursor;
+          import android.graphics.Bitmap;
+          import android.graphics.BitmapFactory;
+          import android.media.MediaScannerConnection;
           import android.net.Uri;
           import android.os.Build;
           import android.os.Bundle;
           import android.os.Environment;
+          import android.provider.MediaStore;
           import android.provider.Settings;
           import android.speech.RecognitionListener;
           import android.speech.RecognizerIntent;
           import android.speech.SpeechRecognizer;
+          import android.view.View;
+          import android.webkit.MimeTypeMap;
           import android.widget.Button;
+          import android.widget.ImageView;
+          import android.widget.LinearLayout;
           import android.widget.TextView;
           import android.widget.Toast;
+          import androidx.core.content.FileProvider;
           import java.io.File;
           import java.util.ArrayList;
-          import java.util.Arrays;
+          import java.util.HashSet;
+          import java.util.List;
           import java.util.Locale;
+          import java.util.Set;
 
           public class MainActivity extends Activity {
-              private TextView tvStatus;
+              private TextView tvTitle, tvStatus, tvCurrentFileName, tvAlertBadge;
+              private ImageView ivPreview;
+              private LinearLayout reviewControls;
+              private Button btnStartReview, btnVoiceRenameCurrent, btnDeleteCurrent, btnSkipCurrent, btnVoiceSearch;
+
               private SpeechRecognizer speechRecognizer;
-              private String mode = "SEARCH";
+              private SharedPreferences prefs;
+
+              private List<File> pendingFiles = new ArrayList<>();
+              private int currentIndex = 0;
+              private boolean isSearching = false;
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   setContentView(R.layout.activity_main);
 
+                  prefs = getSharedPreferences("VoiceFilePrefs", Context.MODE_PRIVATE);
+                  initFirstInstallTime();
+
+                  tvTitle = findViewById(R.id.tvTitle);
                   tvStatus = findViewById(R.id.tvStatus);
-                  Button btnRename = findViewById(R.id.btnRenameLatest);
-                  Button btnSearch = findViewById(R.id.btnVoiceSearch);
+                  tvCurrentFileName = findViewById(R.id.tvCurrentFileName);
+                  tvAlertBadge = findViewById(R.id.tvAlertBadge);
+                  ivPreview = findViewById(R.id.ivPreview);
+                  reviewControls = findViewById(R.id.reviewControls);
+
+                  btnStartReview = findViewById(R.id.btnStartReview);
+                  btnVoiceRenameCurrent = findViewById(R.id.btnVoiceRenameCurrent);
+                  btnDeleteCurrent = findViewById(R.id.btnDeleteCurrent);
+                  btnSkipCurrent = findViewById(R.id.btnSkipCurrent);
+                  btnVoiceSearch = findViewById(R.id.btnVoiceSearch);
 
                   checkPermissions();
                   setupSpeechRecognizer();
 
-                  btnRename.setOnClickListener(v -> {
-                      mode = "RENAME";
-                      startListening("Speak new file name...");
+                  btnStartReview.setOnClickListener(v -> startReviewProcess());
+
+                  btnVoiceRenameCurrent.setOnClickListener(v -> {
+                      isSearching = false;
+                      startListening("Speak new name for this file...");
                   });
 
-                  btnSearch.setOnClickListener(v -> {
-                      mode = "SEARCH";
+                  btnDeleteCurrent.setOnClickListener(v -> deleteCurrentFile());
+
+                  btnSkipCurrent.setOnClickListener(v -> {
+                      markReviewed(getCurrentFile());
+                      nextFile();
+                  });
+
+                  btnVoiceSearch.setOnClickListener(v -> {
+                      isSearching = true;
                       startListening("Speak file name to search...");
                   });
+
+                  refreshPendingFilesList();
+              }
+
+              @Override
+              protected void onResume() {
+                  super.onResume();
+                  refreshPendingFilesList();
+              }
+
+              private void initFirstInstallTime() {
+                  if (!prefs.contains("install_timestamp")) {
+                      prefs.edit().putLong("install_timestamp", System.currentTimeMillis()).apply();
+                  }
+              }
+
+              private Set<String> getReviewedPaths() {
+                  return prefs.getStringSet("reviewed_paths", new HashSet<>());
+              }
+
+              private void markReviewed(File file) {
+                  if (file == null) return;
+                  Set<String> set = new HashSet<>(getReviewedPaths());
+                  set.add(file.getAbsolutePath());
+                  prefs.edit().putStringSet("reviewed_paths", set).apply();
+              }
+
+              private void refreshPendingFilesList() {
+                  long installTime = prefs.getLong("install_timestamp", 0);
+                  Set<String> reviewed = getReviewedPaths();
+                  pendingFiles.clear();
+
+                  File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                  File[] files = folder.listFiles(f -> f.isFile() && !f.getName().endsWith(".crdownload") && !f.getName().endsWith(".tmp"));
+
+                  if (files != null) {
+                      for (File f : files) {
+                          // App install ayina tharvatha vachina files ni mathrame theesukuntundi
+                          if (f.lastModified() >= installTime) {
+                              if (!reviewed.contains(f.getAbsolutePath())) {
+                                  pendingFiles.add(f);
+                              }
+                          }
+                      }
+                  }
+
+                  if (!pendingFiles.isEmpty()) {
+                      tvAlertBadge.setVisibility(View.VISIBLE);
+                      tvAlertBadge.setText("⚠️ " + pendingFiles.size() + " new downloads to review!");
+                  } else {
+                      tvAlertBadge.setVisibility(View.GONE);
+                  }
+              }
+
+              private void startReviewProcess() {
+                  refreshPendingFilesList();
+                  if (pendingFiles.isEmpty()) {
+                      tvStatus.setText("All downloads are reviewed! 🎉");
+                      reviewControls.setVisibility(View.GONE);
+                      ivPreview.setVisibility(View.GONE);
+                      tvCurrentFileName.setText("");
+                      return;
+                  }
+                  currentIndex = 0;
+                  reviewControls.setVisibility(View.VISIBLE);
+                  displayCurrentFile();
+              }
+
+              private File getCurrentFile() {
+                  if (currentIndex >= 0 && currentIndex < pendingFiles.size()) {
+                      return pendingFiles.get(currentIndex);
+                  }
+                  return null;
+              }
+
+              private void displayCurrentFile() {
+                  File current = getCurrentFile();
+                  if (current == null || !current.exists()) {
+                      nextFile();
+                      return;
+                  }
+
+                  tvStatus.setText("File (" + (currentIndex + 1) + "/" + pendingFiles.size() + ")");
+                  tvCurrentFileName.setText(current.getName());
+
+                  String name = current.getName().toLowerCase();
+                  if (name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".webp")) {
+                      ivPreview.setVisibility(View.VISIBLE);
+                      Bitmap bitmap = BitmapFactory.decodeFile(current.getAbsolutePath());
+                      if (bitmap != null) {
+                          ivPreview.setImageBitmap(bitmap);
+                      } else {
+                          ivPreview.setImageResource(android.R.drawable.ic_menu_gallery);
+                      }
+                  } else {
+                      ivPreview.setVisibility(View.VISIBLE);
+                      ivPreview.setImageResource(android.R.drawable.ic_menu_agenda);
+                  }
+              }
+
+              private void deleteCurrentFile() {
+                  File current = getCurrentFile();
+                  if (current != null && current.exists()) {
+                      String delName = current.getName();
+                      if (current.delete()) {
+                          Toast.makeText(this, "Deleted: " + delName, Toast.LENGTH_SHORT).show();
+                          MediaScannerConnection.scanFile(this, new String[]{current.getAbsolutePath()}, null, null);
+                          markReviewed(current);
+                          pendingFiles.remove(currentIndex);
+                          if (currentIndex >= pendingFiles.size()) {
+                              currentIndex = pendingFiles.size() - 1;
+                          }
+                          if (!pendingFiles.isEmpty()) {
+                              displayCurrentFile();
+                          } else {
+                              finishReview();
+                          }
+                      } else {
+                          Toast.makeText(this, "Failed to delete file", Toast.LENGTH_SHORT).show();
+                      }
+                  }
+              }
+
+              private void renameCurrentFile(String newName) {
+                  File current = getCurrentFile();
+                  if (current != null && current.exists()) {
+                      String oldName = current.getName();
+                      String ext = oldName.contains(".") ? oldName.substring(oldName.lastIndexOf(".")) : "";
+                      File target = new File(current.getParent(), newName + ext);
+
+                      if (current.renameTo(target)) {
+                          Toast.makeText(this, "Renamed to: " + target.getName(), Toast.LENGTH_SHORT).show();
+                          MediaScannerConnection.scanFile(this, new String[]{target.getAbsolutePath(), current.getAbsolutePath()}, null, null);
+                          markReviewed(target);
+                          nextFile();
+                      } else {
+                          Toast.makeText(this, "Rename failed", Toast.LENGTH_SHORT).show();
+                      }
+                  }
+              }
+
+              private void nextFile() {
+                  currentIndex++;
+                  if (currentIndex < pendingFiles.size()) {
+                      displayCurrentFile();
+                  } else {
+                      finishReview();
+                  }
+              }
+
+              private void finishReview() {
+                  tvStatus.setText("All files reviewed successfully! 🎉");
+                  tvCurrentFileName.setText("");
+                  ivPreview.setVisibility(View.GONE);
+                  reviewControls.setVisibility(View.GONE);
+                  refreshPendingFilesList();
               }
 
               private void setupSpeechRecognizer() {
@@ -182,15 +493,14 @@ jobs:
                           ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                           if (matches != null && !matches.isEmpty()) {
                               String spokenText = matches.get(0).trim().replace(" ", "_");
-                              tvStatus.setText("Result: " + spokenText);
-                              if ("RENAME".equals(mode)) {
-                                  renameLatestFile(spokenText);
-                              } else {
+                              if (isSearching) {
                                   searchAndOpen(spokenText);
+                              } else {
+                                  renameCurrentFile(spokenText);
                               }
                           }
                       }
-                      @Override public void onError(int error) { tvStatus.setText("Voice error. Try again."); }
+                      @Override public void onError(int error) { tvStatus.setText("Voice recognition error. Try again."); }
                       @Override public void onReadyForSpeech(Bundle params) {}
                       @Override public void onBeginningOfSpeech() {}
                       @Override public void onRmsChanged(float rmsdB) {}
@@ -209,26 +519,6 @@ jobs:
                   speechRecognizer.startListening(intent);
               }
 
-              private void renameLatestFile(String newName) {
-                  File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                  File[] files = folder.listFiles(File::isFile);
-                  if (files != null && files.length > 0) {
-                      Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
-                      File latest = files[0];
-                      String name = latest.getName();
-                      String ext = name.contains(".") ? name.substring(name.lastIndexOf(".")) : "";
-                      File target = new File(latest.getParent(), newName + ext);
-                      if (latest.renameTo(target)) {
-                          tvStatus.setText("Renamed: " + target.getName());
-                          Toast.makeText(this, "Success: " + target.getName(), Toast.LENGTH_LONG).show();
-                      } else {
-                          tvStatus.setText("Rename failed");
-                      }
-                  } else {
-                      tvStatus.setText("No files in Downloads");
-                  }
-              }
-
               private void searchAndOpen(String query) {
                   File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                   File[] files = folder.listFiles(File::isFile);
@@ -243,9 +533,15 @@ jobs:
                   }
                   if (found != null) {
                       tvStatus.setText("Found: " + found.getName());
+                      String ext = MimeTypeMap.getFileExtensionFromUrl(found.getAbsolutePath());
+                      String mimeType = ext != null ? MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext.toLowerCase()) : "*/*";
+                      if (mimeType == null) mimeType = "*/*";
+
+                      Uri contentUri = FileProvider.getUriForFile(this, "com.example.voicefile.provider", found);
                       Intent intent = new Intent(Intent.ACTION_VIEW);
-                      intent.setDataAndType(Uri.fromFile(found), "*/*");
-                      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                      intent.setDataAndType(contentUri, mimeType);
+                      intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+
                       try {
                           startActivity(intent);
                       } catch (Exception e) {
